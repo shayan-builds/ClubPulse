@@ -3,75 +3,55 @@ import {
   AlertCircle,
   CalendarDays,
   Check,
-  CheckCircle2,
   Lightbulb,
-  LockKeyhole,
   MessageCircle,
-  Send,
-  ShieldCheck,
-  UserRoundX,
   UsersRound,
 } from "lucide-react"
+import { clubs } from "./data/clubs"
 
 type Category = "Event" | "Management" | "Workshop" | "Other"
 type FormErrors = Partial<Record<"clubName" | "category" | "message", string>>
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(
-  /\/$/,
-  "",
-)
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000"
+).replace(/\/$/, "")
 
 const categories: Array<{
   value: Category
+  label: string
   hint: string
   Icon: typeof CalendarDays
 }> = [
-  { value: "Event", hint: "Fests, meets, competitions", Icon: CalendarDays },
+  {
+    value: "Event",
+    label: "Events",
+    hint: "Fests and meet-ups",
+    Icon: CalendarDays,
+  },
   {
     value: "Management",
-    hint: "Leadership, communication, organisation",
+    label: "Organisation & communication",
+    hint: "How the club is run",
     Icon: UsersRound,
   },
   {
     value: "Workshop",
-    hint: "Sessions, talks, hands-on learning",
+    label: "Workshops & sessions",
+    hint: "Talks and hands-on learning",
     Icon: Lightbulb,
   },
-  { value: "Other", hint: "Anything else on your mind", Icon: MessageCircle },
+  {
+    value: "Other",
+    label: "Something else",
+    hint: "Another club thought",
+    Icon: MessageCircle,
+  },
 ]
-
-const suggestions = [
-  "Coding Club",
-  "Rotaract",
-  "Dramatics",
-  "Debate Society",
-  "Music Club",
-]
-
-function PulseMark({ success = false }: { success?: boolean }) {
-  return (
-    <svg
-      className={success ? "pulse-mark pulse-mark--success" : "pulse-mark"}
-      viewBox="0 0 88 28"
-      aria-hidden="true"
-    >
-      <path
-        d={
-          success
-            ? "M3 15h16l6-8 9 15 9-11 6 5 12-13"
-            : "M2 15h19l5-7 8 15 9-20 9 22 7-10h27"
-        }
-      />
-      {success && <path className="success-check" d="m60 13 8 8L85 4" />}
-    </svg>
-  )
-}
 
 function Logo() {
   return (
     <a className="logo" href="#top" aria-label="ClubPulse, back to top">
       <span>ClubPulse</span>
-      <PulseMark />
     </a>
   )
 }
@@ -82,22 +62,26 @@ function Header() {
       <div className="header-inner">
         <Logo />
         <nav className="header-actions" aria-label="Primary navigation">
-          <a className="how-link" href="#how-it-works">
-            How it works
+          <a className="how-link" href="#thoughts">
+            Thoughts
           </a>
-          <div className="anonymous-pill">
-            <LockKeyhole size={15} strokeWidth={1.75} aria-hidden="true" />
-            <span>100% anonymous</span>
-          </div>
+          <a className="nav-cta" href="#feedback">
+            Share a thought
+          </a>
         </nav>
       </div>
     </header>
   )
 }
 
-function FieldError({ id, children }: { id: string; children: string }) {
+interface FieldErrorProps {
+  id: string
+  children: string
+}
+
+function FieldError({ id, children }: FieldErrorProps) {
   return (
-    <p className="field-error" id={id} role="alert">
+    <p className="field-error" id={id} role="status" aria-live="polite">
       <AlertCircle size={15} strokeWidth={2} aria-hidden="true" />
       {children}
     </p>
@@ -106,21 +90,19 @@ function FieldError({ id, children }: { id: string; children: string }) {
 
 function SuccessPanel({ onReset }: { onReset: () => void }) {
   return (
-    <div className="success-panel" aria-live="polite">
-      <div className="success-icon">
-        <PulseMark success />
-      </div>
-      <p className="success-kicker">Feedback sent</p>
-      <h2>Thanks, that was heard.</h2>
-      <p>Your feedback was sent anonymously.</p>
+    <div
+      className="success-panel"
+      role="status"
+      aria-live="polite"
+      tabIndex={-1}
+    >
+      <p className="success-kicker">Sent</p>
+      <h2>Thanks for sharing.</h2>
+      <p>Your note has been received.</p>
       <div className="success-actions">
         <button className="primary-button" type="button" onClick={onReset}>
-          <MessageCircle size={19} strokeWidth={1.75} aria-hidden="true" />
           Send another
         </button>
-        <a className="text-action" href="#top">
-          Back to top
-        </a>
       </div>
     </div>
   )
@@ -128,6 +110,7 @@ function SuccessPanel({ onReset }: { onReset: () => void }) {
 
 function FeedbackForm() {
   const [clubName, setClubName] = useState("")
+  const [clubQuery, setClubQuery] = useState("")
   const [category, setCategory] = useState<Category | "">("")
   const [message, setMessage] = useState("")
   const [errors, setErrors] = useState<FormErrors>({})
@@ -136,13 +119,23 @@ function FeedbackForm() {
   const [isSuccess, setIsSuccess] = useState(false)
   const clubInputRef = useRef<HTMLInputElement>(null)
   const submissionInProgressRef = useRef(false)
+  const matchingClubs = clubs.filter((club) =>
+    club.toLowerCase().includes(clubQuery.trim().toLowerCase()),
+  )
+  const isCustomClub =
+    clubQuery.trim().length > 0 &&
+    !clubs.some((club) => club.toLowerCase() === clubQuery.trim().toLowerCase())
+  const clubOptions = [
+    ...matchingClubs,
+    ...(isCustomClub ? [clubQuery.trim()] : []),
+  ]
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!clubName.trim()) nextErrors.clubName = "Enter the club name."
-    if (!category) nextErrors.category = "Pick a category."
+    if (!clubName.trim()) nextErrors.clubName = "Choose a club or add its name."
+    if (!category) nextErrors.category = "Choose a topic."
     if (message.trim().length < 12) {
-      nextErrors.message = "Write at least a sentence of feedback."
+      nextErrors.message = "Add a little more detail (at least 12 characters)."
     } else if (message.length > 1000) {
       nextErrors.message = "Feedback can't exceed 1000 characters."
     }
@@ -212,12 +205,43 @@ function FeedbackForm() {
 
   const reset = () => {
     setClubName("")
+    setClubQuery("")
     setCategory("")
     setMessage("")
     setErrors({})
     setSubmitError(null)
     setIsSuccess(false)
     window.setTimeout(() => clubInputRef.current?.focus(), 50)
+  }
+
+  const selectClub = (name: string) => {
+    setClubName(name)
+    if (errors.clubName) setErrors({ ...errors, clubName: undefined })
+  }
+
+  const clearClub = () => {
+    setClubName("")
+    setClubQuery("")
+    if (errors.clubName) setErrors({ ...errors, clubName: undefined })
+    window.setTimeout(() => clubInputRef.current?.focus(), 0)
+  }
+
+  const moveClubSelection = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (
+      !clubOptions.length ||
+      !["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)
+    )
+      return
+    event.preventDefault()
+    const direction =
+      event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1
+    const nextIndex =
+      (index + direction + clubOptions.length) % clubOptions.length
+    selectClub(clubOptions[nextIndex])
+    document.getElementById(`club-option-${nextIndex}`)?.focus()
   }
 
   const chooseCategoryWithKeyboard = (
@@ -251,67 +275,109 @@ function FeedbackForm() {
     <form className="feedback-form" onSubmit={submit} noValidate>
       <div className="form-heading">
         <div>
-          <p className="form-eyebrow">A quiet word</p>
-          <h2>Share your feedback</h2>
-          <p>Your response is anonymous.</p>
+          <p className="form-eyebrow">Your note</p>
+          <h2>
+            {clubName ? `Feedback for ${clubName}` : "Choose a club first"}
+          </h2>
+          <p>Pick a topic, then tell us what you think.</p>
         </div>
-        <ShieldCheck size={25} strokeWidth={1.5} aria-hidden="true" />
       </div>
 
       <div className="field-group">
-        <label htmlFor="club-name">Club name</label>
+        <label htmlFor="club-name">Find or enter a club</label>
         <input
           ref={clubInputRef}
           id="club-name"
           type="text"
-          value={clubName}
+          value={clubQuery}
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.clubName)}
-          aria-describedby={errors.clubName ? "club-name-error" : undefined}
-          placeholder="e.g. Coding Club, Rotaract, Dramatics"
+          aria-describedby={
+            errors.clubName
+              ? "club-name-error club-name-hint"
+              : "club-name-hint"
+          }
+          aria-controls="club-options"
+          placeholder="Search clubs or type a name"
           onChange={(event) => {
-            setClubName(event.target.value)
+            setClubQuery(event.target.value)
+            setClubName("")
             if (errors.clubName) setErrors({ ...errors, clubName: undefined })
           }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown" && clubOptions.length) {
+              event.preventDefault()
+              document.getElementById("club-option-0")?.focus()
+            }
+          }}
         />
+        <p className="field-hint" id="club-name-hint">
+          Choose one below, or use your own club name.
+        </p>
         {errors.clubName && (
           <FieldError id="club-name-error">{errors.clubName}</FieldError>
         )}
-        <div
-          className="suggestions"
-          role="group"
-          aria-label="Club name suggestions"
-        >
-          {suggestions.map((suggestion) => (
+        {clubOptions.length > 0 && (
+          <div
+            className="club-options"
+            id="club-options"
+            role="radiogroup"
+            aria-label="Matching clubs"
+          >
+            {clubOptions.map((option, index) => (
+              <button
+                id={`club-option-${index}`}
+                className={
+                  clubName === option
+                    ? "club-option is-selected"
+                    : "club-option"
+                }
+                type="button"
+                role="radio"
+                aria-checked={clubName === option}
+                tabIndex={
+                  clubName === option || (!clubName && index === 0) ? 0 : -1
+                }
+                disabled={isSubmitting}
+                key={`${option}-${index}`}
+                onKeyDown={(event) => moveClubSelection(event, index)}
+                onClick={() => selectClub(option)}
+              >
+                {option}
+                {isCustomClub && index === clubOptions.length - 1 && (
+                  <span className="custom-club-label">Use this name</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        {clubName && (
+          <div className="selected-club">
+            <span>
+              Feedback for <strong>{clubName}</strong>
+            </span>
             <button
-              className={
-                clubName === suggestion
-                  ? "suggestion-chip is-active"
-                  : "suggestion-chip"
-              }
               type="button"
-              key={suggestion}
+              className="clear-selection"
+              onClick={clearClub}
               disabled={isSubmitting}
-              onClick={() => {
-                setClubName(suggestion)
-                setErrors({ ...errors, clubName: undefined })
-              }}
+              aria-label={`Clear ${clubName} selection`}
             >
-              {suggestion}
+              Clear
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       <fieldset className="field-group">
-        <legend>What is this about?</legend>
+        <legend>Choose a topic</legend>
         <div
           className="category-grid"
           role="radiogroup"
           aria-invalid={Boolean(errors.category)}
           aria-describedby={errors.category ? "category-error" : undefined}
         >
-          {categories.map(({ value, hint, Icon }, index) => {
+          {categories.map(({ value, label, hint, Icon }, index) => {
             const selected = category === value
             return (
               <button
@@ -338,7 +404,7 @@ function FeedbackForm() {
                   aria-hidden="true"
                 />
                 <span className="category-copy">
-                  <strong>{value}</strong>
+                  <strong>{label}</strong>
                   <small>{hint}</small>
                 </span>
                 {selected && (
@@ -370,7 +436,7 @@ function FeedbackForm() {
                 ? "message-error character-count"
                 : "character-count"
             }
-            placeholder="What went well? What could be better? Be specific, it helps."
+            placeholder="What happened, and what would make it better?"
             onChange={(event) => {
               setMessage(event.target.value)
               if (errors.message) setErrors({ ...errors, message: undefined })
@@ -389,7 +455,7 @@ function FeedbackForm() {
       </div>
 
       {submitError && (
-        <div className="error-banner" role="alert">
+        <div className="error-banner" role="status" aria-live="polite">
           <AlertCircle size={19} strokeWidth={2} aria-hidden="true" />
           <span>{submitError}</span>
           <button type="button" onClick={() => submit()}>
@@ -406,62 +472,41 @@ function FeedbackForm() {
         {isSubmitting ? (
           <>
             <span className="spinner" aria-hidden="true" />
-            Sending…
+            Sending...
           </>
         ) : (
-          <>
-            Send feedback
-            <Send size={19} strokeWidth={1.75} aria-hidden="true" />
-          </>
+          <>{clubName ? `Send feedback to ${clubName}` : "Send feedback"}</>
         )}
       </button>
-      <p className="privacy-note">
-        <LockKeyhole size={14} strokeWidth={1.75} aria-hidden="true" />
-        Submitting won't reveal your identity.
-      </p>
+      <p className="privacy-note">No account or name needed.</p>
     </form>
   )
 }
 
-function ReassuranceList() {
-  const points = [
-    { Icon: CheckCircle2, text: "No sign-up needed" },
-    { Icon: UserRoundX, text: "We don't ask who you are" },
-    { Icon: MessageCircle, text: "Max 1000 characters, say it clearly" },
-  ]
-
-  return (
-    <div className="reassurances">
-      {points.map(({ Icon, text }) => (
-        <div className="reassurance" key={text}>
-          <Icon size={19} strokeWidth={1.75} aria-hidden="true" />
-          <span>{text}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function HowItWorks() {
+function ThoughtsSection() {
   const steps = [
     [
       "01",
-      "Pick a club and category",
-      "Start with where your feedback belongs.",
+      "Name the moment",
+      "A detail about an event, workshop, or meeting gives your note context.",
     ],
     [
       "02",
-      "Write your honest feedback",
-      "Specific, thoughtful words help most.",
+      "Say what could help",
+      "A clear suggestion makes it easier to act on what you noticed.",
     ],
-    ["03", "Send it anonymously", "No account, name or profile attached."],
+    [
+      "03",
+      "Keep it yours",
+      "Write in your own words. A short, honest note is enough.",
+    ],
   ]
 
   return (
-    <section className="how-section" id="how-it-works">
+    <section className="thoughts-section" id="thoughts">
       <div className="section-heading">
-        <p className="eyebrow">Simple by design</p>
-        <h2>Say what matters in a minute.</h2>
+        <p className="eyebrow">Thoughts worth sharing</p>
+        <h2>Make your note clear, kind, and useful.</h2>
       </div>
       <div className="steps">
         {steps.map(([number, title, copy]) => (
@@ -478,40 +523,15 @@ function HowItWorks() {
   )
 }
 
-function WhyAnonymous() {
-  const principles = [
-    "No accounts, no tracking of who you are",
-    "Feedback goes to the club's team to improve",
-    "Specific is better than harsh",
-  ]
-
-  return (
-    <section className="why-section">
-      <div>
-        <p className="eyebrow">Why anonymous?</p>
-        <h2>Honest feedback needs a safe place.</h2>
-      </div>
-      <div className="principles">
-        {principles.map((principle, index) => (
-          <div className="principle" key={principle}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <p>{principle}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-inner">
         <div>
           <Logo />
-          <p>Built by a student, for students.</p>
+          <p>A place to share campus club feedback.</p>
         </div>
-        <p className="copyright">© 2026 ClubPulse</p>
+        <p className="copyright">2026 ClubPulse</p>
       </div>
     </footer>
   )
@@ -524,29 +544,25 @@ export default function App() {
       <main>
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">
-              <span aria-hidden="true" />
-              Anonymous · Takes 1 minute
-            </p>
-            <h1>Tell your club what you really think.</h1>
-            <p className="hero-description">
-              Share honest feedback about events, workshops or how a club is
-              run. No account. No name. Just your words.
-            </p>
-            <div className="hero-pulse">
-              <PulseMark />
+            <div className="hero-copy-main">
+              <p className="eyebrow">
+                BMSCE clubs / campus feedback
+              </p>
+              <h1>Your club. Your voice.</h1>
+              <p className="hero-description">
+                Tell your club what worked and what didn't. Pick a club, write
+                it down, and help shape what comes next.
+              </p>
+              <a className="hero-link" href="#feedback">
+                Leave a thoughtful note
+              </a>
             </div>
-            <ReassuranceList />
           </div>
-          <div className="form-card">
+          <div className="form-card" id="feedback">
             <FeedbackForm />
           </div>
-          <div className="mobile-reassurances">
-            <ReassuranceList />
-          </div>
         </section>
-        <HowItWorks />
-        <WhyAnonymous />
+        <ThoughtsSection />
       </main>
       <Footer />
     </div>
