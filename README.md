@@ -1,75 +1,78 @@
-# ClubPulse
+# ClubPulse 🎓
 
-ClubPulse is a college club feedback platform that allows students to share feedback about clubs, events, management, and workshops through a simple, anonymous-style feedback form.
+**A full-stack college club feedback platform built to make sharing feedback simple and accessible.**
 
-## Features
+ClubPulse lets students submit feedback about college clubs, events, management, and workshops through a clean, responsive interface. It connects a React frontend to an Express REST API and MongoDB Atlas to store feedback.
 
-- Submit feedback for college clubs.
-- Choose a feedback category: Event, Management, Workshop, or Other.
-- Form validation and clear error messages.
-- Loading and success states during submission.
-- Responsive React frontend.
-- Express REST API for processing feedback.
-- MongoDB Atlas integration for storing feedback.
-- Feedback records include creation and update timestamps.
+**Live Demo:** [ClubPulse](https://club-pulse-roan.vercel.app/)  
+**Source Code:** [GitHub Repository](https://github.com/shayan-builds/ClubPulse)
 
-## Tech Stack
+## ✨ Features
 
-**Frontend**
-- React
-- TypeScript
-- Vite
+- **Club Selection:** Select a college club before submitting feedback.
+- **Feedback Categories:** Choose Event, Management, Workshop, or Other.
+- **Form Validation:** Clear validation and error messages.
+- **Submission Feedback:** Loading and success states during submission.
+- **Responsive UI:** Designed to work across desktop and mobile screens.
+- **Theme Customization:** Dark and light themes for a more comfortable experience.
+- **REST API Integration:** Sends feedback to an Express backend.
+- **Database Persistence:** Stores feedback in MongoDB Atlas.
+- **Timestamps:** Feedback records include creation and update timestamps.
 
-**Backend**
-- Node.js
-- Express.js
-- Mongoose
+## 🛠️ Tech Stack
 
-**Database**
-- MongoDB Atlas
+| Layer | Technologies |
+|---|---|
+| Frontend | React, TypeScript, Vite |
+| Styling | Tailwind CSS |
+| Backend | Node.js, Express.js |
+| Database | MongoDB Atlas |
+| ODM | Mongoose |
+| Deployment | Vercel (frontend), Render (backend) |
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 ClubPulse/
-├── client/       # React frontend
-├── server/       # Express backend
+├── client/          # React frontend
+│   └── src/          # UI components, styles and club data
+├── server/          # Express backend and API
 ├── .gitignore
 └── README.md
 ```
 
-## Prerequisites
+## 🚀 Getting Started
 
-- Node.js and npm
-- A MongoDB Atlas account or MongoDB instance
-- Git
+Follow these steps to run ClubPulse locally.
 
-## Local Setup
+### Prerequisites
+
+- [Node.js and npm](https://nodejs.org/)
+- [Git](https://git-scm.com/)
+- A MongoDB Atlas account or another accessible MongoDB instance
 
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/shayan-builds/ClubPulse.git
 cd ClubPulse
 ```
 
-Replace `YOUR_GITHUB_REPOSITORY_URL` with your actual repository URL.
-
-### 2. Set up the backend
+### 2. Configure the backend
 
 ```bash
 cd server
 npm install
 ```
 
-Create a `.env` file inside the `server` folder:
+Create a `.env` file inside the `server/` directory:
 
 ```env
 MONGODB_URI=YOUR_MONGODB_CONNECTION_STRING
 PORT=5000
 ```
 
-Replace the placeholder with your MongoDB connection string. Never commit this file to GitHub.
+Replace the placeholder with your MongoDB connection string. Keep your credentials private and never commit your `.env` file.
 
 Start the backend:
 
@@ -77,22 +80,24 @@ Start the backend:
 node server.js
 ```
 
-### 3. Set up the frontend
+Keep this terminal running.
 
-Open a second terminal:
+### 3. Configure the frontend
+
+Open a second terminal from the project root:
 
 ```bash
 cd client
 npm install
 ```
 
-Create a `.env.local` file inside `client`:
+Create a `.env.local` file inside `client/`:
 
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
-Start the frontend:
+Start the development server:
 
 ```bash
 npm run dev
@@ -100,13 +105,15 @@ npm run dev
 
 Open the local URL displayed by Vite in your browser.
 
-## API
+**Note:** The frontend environment variable must point to the backend server. If you change the backend port, update the URL accordingly.
+
+## 🔌 API Reference
 
 ### Submit Feedback
 
 `POST /api/feedback`
 
-Example JSON request:
+**Example request body:**
 
 ```json
 {
@@ -116,23 +123,37 @@ Example JSON request:
 }
 ```
 
-A successful submission returns HTTP `201` and saves the feedback in MongoDB.
+A successful submission returns HTTP `201` and stores the feedback in MongoDB.
 
-## Privacy
+The frontend uses the `VITE_API_URL` environment variable to locate the backend API.
 
-The form does not ask students to provide their names or email addresses. However, this does not guarantee complete anonymity at the infrastructure level.
+## 🌐 Deployment
 
-## Deployment
+ClubPulse uses separate deployments for its frontend and backend:
 
-The frontend can be deployed on Vercel, and the Express backend can be deployed on Render. MongoDB Atlas stores the feedback data. Configure production environment variables and CORS settings before deployment.
+- **Frontend:** [Vercel](https://vercel.com/)
+- **Backend:** [Render](https://render.com/)
+- **Database:** [MongoDB Atlas](https://www.mongodb.com/atlas)
 
-## Future Improvements
+For deployment, configure the required environment variables in the respective hosting dashboards. Ensure that the backend's CORS configuration permits requests from the production frontend domain.
 
-- Feedback dashboard for authorized club administrators.
-- Feedback filtering and analytics.
+Never put database credentials or other secrets in frontend environment variables. Variables prefixed with `VITE_` are exposed to the client-side application.
+
+## 🔒 Privacy
+
+The feedback form does not ask students for their names or email addresses. However, this does not guarantee complete anonymity at the infrastructure level. Server logs, hosting providers, and other infrastructure may process technical request information.
+
+## 🗺️ Future Improvements
+
+- An analytics dashboard for authorized club administrators.
+- Feedback filtering and reporting.
 - Spam prevention and rate limiting.
 - Additional privacy and security controls.
 
-## Author
+## 👨‍💻 Author
 
-Developed as a college project.
+Built as a college project to explore full-stack web development, API integration, database persistence, and deployment.
+
+---
+
+If you find ClubPulse interesting, feel free to explore the source code and share feedback.
