@@ -1,10 +1,12 @@
-import { FormEvent, KeyboardEvent, useRef, useState } from "react"
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react"
 import {
   AlertCircle,
   CalendarDays,
   Check,
   Lightbulb,
   MessageCircle,
+  Moon,
+  Sun,
   UsersRound,
 } from "lucide-react"
 import { clubs } from "./data/clubs"
@@ -56,7 +58,9 @@ function Logo() {
   )
 }
 
-function Header() {
+type Theme = "dark" | "light"
+
+function Header({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -68,6 +72,16 @@ function Header() {
           <a className="nav-cta" href="#feedback">
             Share a thought
           </a>
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+            <span>{theme === "dark" ? "Light" : "Dark"}</span>
+          </button>
         </nav>
       </div>
     </header>
@@ -276,7 +290,7 @@ function FeedbackForm() {
       <div className="form-heading">
         <div>
           <p className="form-eyebrow">Your note</p>
-          <h2>
+          <h2 className={!clubName ? "club-prompt" : undefined}>
             {clubName ? `Feedback for ${clubName}` : "Choose a club first"}
           </h2>
           <p>Pick a topic, then tell us what you think.</p>
@@ -538,9 +552,26 @@ function Footer() {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.dataset.theme === "light" ? "light" : "dark",
+  )
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      theme === "dark" ? "#07111f" : "#f1f5f8",
+    )
+    try {
+      window.localStorage.setItem("clubpulse-theme", theme)
+    } catch {
+      // The selected theme still applies for this session if storage is unavailable.
+    }
+  }, [theme])
+
   return (
     <div id="top">
-      <Header />
+      <Header theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
       <main>
         <section className="hero">
           <div className="hero-copy">
@@ -548,7 +579,7 @@ export default function App() {
               <p className="eyebrow">
                 BMSCE clubs / campus feedback
               </p>
-              <h1>Your club. Your voice.</h1>
+              <h1>Your club. <span>Your voice.</span></h1>
               <p className="hero-description">
                 Tell your club what worked and what didn't. Pick a club, write
                 it down, and help shape what comes next.
